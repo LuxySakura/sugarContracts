@@ -9,5 +9,6 @@
     "skipLibCheck": true,
     "moduleResolution": "node16",
     "outDir": "dist"
-  }
+  },
+  "exclude": ["artifacts", "cache", "dist", "node_modules", "types"]
 }

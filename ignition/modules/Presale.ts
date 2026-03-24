@@ -1,6 +1,6 @@
 // ignition/modules/SugarCoin.ts
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { PRICE_FEED } from "@/config";
+import { PRICE_FEED } from "../../config/index.js";
 
 const PresaleModule = buildModule(
     "PresaleModule",

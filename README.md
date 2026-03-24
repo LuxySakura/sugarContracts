@@ -5,7 +5,7 @@
 ## 当前技术栈
 
 - Hardhat `3.2.0`
-- Ethers `6`
+- viem
 - TypeScript 配置文件与测试
 - OpenZeppelin Contracts `5.6.1`
 - 内置 Chainlink `AggregatorV3Interface` 接口
@@ -26,21 +26,15 @@ hardhat.config.ts
 ## 常用命令
 
 ```bash
-npm install
-npm run build
-npm test
-```
-
-只跑 TypeScript 测试：
-
-```bash
-npm run test:mocha
+pnpm install
+pnpm build
+pnpm test
 ```
 
 启动本地 Hardhat 节点：
 
 ```bash
-npm run node
+pnpm node
 ```
 
 ## 网络配置

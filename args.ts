@@ -1,4 +1,4 @@
-import {PRICE_FEED} from "@/config";
+import { PRICE_FEED } from "./config/index.js";
 
 const sugarCoinAddress = "0x17E0a4B5a62C0fF8FeF8F09c4D0F18574C7AD22D";
 const usdtAddress = "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2";

@@ -101,7 +101,7 @@ describe("PreSale", function () {
             );
 
             // 3. 调用 buyWithETH
-            await presaleAsBuyer.write.buyWithETH({ value: ethAmountToPay });
+            await presaleAsBuyer.write.buyWithETH([], { value: ethAmountToPay });
 
             // 4. 验证结果
             const expectedTokenAmount = parseEther("60000");
@@ -126,7 +126,7 @@ describe("PreSale", function () {
 
             // 尝试发送 0 ETH
             await expect(
-                presaleAsBuyer.write.buyWithETH({ value: 0n })
+                presaleAsBuyer.write.buyWithETH([], { value: 0n })
             ).to.be.rejectedWith("Send ETH");
         });
 
@@ -149,7 +149,7 @@ describe("PreSale", function () {
             const balanceBefore = await publicClient.getBalance({ address: presale.address });
 
             // 购买
-            await presaleAsBuyer.write.buyWithETH({ value: ethAmount });
+            await presaleAsBuyer.write.buyWithETH([], { value: ethAmount });
 
             // 记录合约之后的余额
             const balanceAfter = await publicClient.getBalance({ address: presale.address });
@@ -238,7 +238,12 @@ describe("PreSale", function () {
             await presaleAsBuyer.write.buyWithUSDC([usdcAmount]);
 
             const currentRoundIndex = await presale.read.currentRoundIndex();
-            const tokenSold = (await presale.read.rounds([currentRoundIndex])).at(1)
+            const [, tokenSold] = await presale.read.rounds([currentRoundIndex]) as readonly [
+                bigint,
+                bigint,
+                bigint,
+                boolean,
+            ];
 
             expect(tokenSold).to.equal(parseEther("1000"));
         });
@@ -269,11 +274,11 @@ describe("PreSale", function () {
             await presaleAsBuyer.write.buyWithUSDT([amount]);
 
             // Owner 提取资金
-            const balanceBefore = await usdt.read.balanceOf([owner.account.address]);
+            const balanceBefore = await usdt.read.balanceOf([owner.account.address]) as bigint;
 
             await presale.write.withdrawFunds([usdt.address]);
 
-            const balanceAfter = await usdt.read.balanceOf([owner.account.address]);
+            const balanceAfter = await usdt.read.balanceOf([owner.account.address]) as bigint;
             expect(balanceAfter - balanceBefore).to.equal(amount);
         });
 
@@ -287,9 +292,14 @@ describe("PreSale", function () {
 
             // 实现暂停功能
             await presale.write.pauseRound()
-            const currentRound = await presale.read.rounds([currentRoundIndex])
+            const currentRound = await presale.read.rounds([currentRoundIndex]) as readonly [
+                bigint,
+                bigint,
+                bigint,
+                boolean,
+            ];
             // 判断当前轮次是否成功暂停 isActive === False
-            expect(currentRound.at(3)).to.be.false;
+            expect(currentRound[3]).to.be.false;
 
         });
 
@@ -306,11 +316,16 @@ describe("PreSale", function () {
             // 判断轮次是否更改成功
             const currentRoundIndex = await presale.read.currentRoundIndex();
             expect(currentRoundIndex).to.equal(2);
-            const currentRound = await presale.read.rounds([currentRoundIndex])
+            const currentRound = await presale.read.rounds([currentRoundIndex]) as readonly [
+                bigint,
+                bigint,
+                bigint,
+                boolean,
+            ];
             // 判断价格是否更改成功
-            expect(currentRound.at(0)).to.equal(parseEther("0.1"));
+            expect(currentRound[0]).to.equal(parseEther("0.1"));
             // 判断是否启动成功
-            expect(currentRound.at(3)).to.be.true;
+            expect(currentRound[3]).to.be.true;
         });
     });
 

@@ -10,7 +10,6 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const adminKey = process.env.PRIVATE_KEY_ADMIN || "";
-const userKey = process.env.PRIVATE_KEY_WHITELIST || "";
 
 export default defineConfig({
   plugins: [
@@ -52,18 +51,20 @@ export default defineConfig({
       url: configVariable("SEPOLIA_RPC_URL"),
       accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
     },
-    // baseSepolia: {
-    //   type: "http",
-    //   url: process.env.BASE_SEPLIA_URL || "https://sepolia.base.org",
-    //   accounts: [adminKey],
-    //   chainId: 84532
-    // },
+    baseSepolia: {
+      type: "http",
+      chainType: "op",
+      url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
+      accounts: adminKey !== "" ? [adminKey] : [],
+      chainId: 84532,
+    },
     base: {
       type: "http",
-      url: process.env.BASE_RPC_URL || "https://base-mainnet.g.alchemy.com/v2/OKqLMet2SIx7vqbRN6g8Q",
-      accounts: [adminKey],
-      chainId: 8453
-    }
+      chainType: "op",
+      url: process.env.BASE_RPC_URL || "https://mainnet.base.org",
+      accounts: adminKey !== "" ? [adminKey] : [],
+      chainId: 8453,
+    },
   },
   chainDescriptors: {
     84532: {
@@ -72,9 +73,9 @@ export default defineConfig({
         etherscan: {
           name: "BaseScan",
           url: "https://sepolia.basescan.org",
-          apiUrl: "https://api-sepolia.basescan.org",
-        }
-      }
+          apiUrl: "https://api-sepolia.basescan.org/api",
+        },
+      },
     },
     8453: {
       name: "base",
@@ -82,14 +83,14 @@ export default defineConfig({
         etherscan: {
           name: "Base Scan",
           url: "https://basescan.org",
-          apiUrl: "https://api.etherscan.io/v2/api",
-        }
-      }
-    }
+          apiUrl: "https://api.basescan.org/api",
+        },
+      },
+    },
   },
   verify: {
     etherscan: {
-      apiKey: process.env.BASESCAN_API_KEY,
+      apiKey: process.env.BASESCAN_API_KEY || "",
     }
-  },
+  }
 });
