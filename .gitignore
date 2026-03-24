@@ -1,0 +1,17 @@
+# Node modules
+/node_modules
+
+# Compilation output
+/dist
+
+# Hardhat build artifacts
+/artifacts
+
+# Hardhat cache
+/cache
+
+# Type generation
+/types
+
+# Coverage output
+/coverage
