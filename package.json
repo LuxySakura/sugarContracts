@@ -11,7 +11,14 @@
     "test": "hardhat test",
     "node": "hardhat node",
     "ignition:deploy:local:sugar": "hardhat ignition deploy ignition/modules/SugarCoin.ts",
-    "ignition:deploy:local:presale": "hardhat ignition deploy ignition/modules/Presale.ts"
+    "ignition:deploy:local:presale": "hardhat ignition deploy ignition/modules/Presale.ts",
+    "ignition:deploy:base-sepolia:sugar-oracle": "hardhat ignition deploy ignition/modules/SugarPriceOracle.ts --network baseSepolia --parameters ignition/parameters/sugar-price-oracle.base-sepolia.json5",
+    "ignition:deploy:base-sepolia:sugar-token": "hardhat ignition deploy ignition/modules/SugarToken.ts --network baseSepolia --parameters ignition/parameters/sugar-token.base-sepolia.json5",
+    "ignition:deploy:base:sugar-oracle": "hardhat ignition deploy ignition/modules/SugarPriceOracle.ts --network base --parameters ignition/parameters/sugar-price-oracle.base.json5",
+    "ignition:deploy:base:sugar-token": "hardhat ignition deploy ignition/modules/SugarToken.ts --network base --parameters ignition/parameters/sugar-token.base.json5",
+    "sugar:oracle:update:base-sepolia": "hardhat run scripts/updateSugarOracle.ts --network baseSepolia",
+    "sugar:testflow:base-sepolia": "hardhat run scripts/testSugarContracts.ts --network baseSepolia",
+    "sugar:withdraw:base-sepolia": "hardhat run scripts/withdrawSugarFunds.ts --network baseSepolia"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1",

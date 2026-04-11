@@ -1,0 +1,18 @@
+{
+  SugarPriceOracleModule: {
+    // Backend updater wallet. This address will call updateSugarUsdPrice(...).
+    updaterAddress: "0x8a631f184b529f5e575450fe3c5371e8e4513850",
+
+    // Replace with the official Chainlink ETH/USD feed address on Base Sepolia.
+    nativeUsdFeedAddress: "0x4aDC67696bA383F43DD60A9e78F2C97Fbbfc7cb1",
+
+    // Example: 600 USD / ton, scaled to 18 decimals.
+    initialSugarUsdPricePerTon: "100000000000000000000n",
+
+    // Sugar market price freshness threshold in seconds.
+    initialMaxSugarPriceAge: "86400n",
+
+    // Native/USD feed freshness threshold in seconds.
+    initialMaxNativePriceAge: "7200n",
+  },
+}

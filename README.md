@@ -57,3 +57,9 @@ npx hardhat keystore set SEPOLIA_PRIVATE_KEY
 - `ignition/modules/Presale.ts`：`Presale` 部署模块
 
 如果你后面要继续加合约，直接放进 `contracts/`，然后补测试到 `test/` 即可。
+
+# Testnet Contract Address
+SugarCoinModule#SugarCoin - 0x4cA87D18d2b4b79C33d3517c3E88735e719a2650
+PresaleModule#Presale - 0x2Ef4E7b1B1f4F6fe7dFaEc330da13dC2345c722f
+SugarPriceOracleModule#SugarPriceOracle - 0xdC2dc5D5B668c6f80F298489aCb7a342C16ffB6f
+SugarTokenModule#SugarCommodityToken - 0xBb2D574c5DAeC882E95f26b903Bee889478fA75F

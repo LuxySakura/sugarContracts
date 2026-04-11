@@ -1,0 +1,12 @@
+{
+  SugarTokenModule: {
+    // Fill this with the deployed SugarPriceOracle address on Base mainnet.
+    oracleAddress: "0xYourDeployedSugarPriceOracleAddress",
+
+    // Fill this with the official USDC token address on Base mainnet.
+    usdcAddress: "0xYourBaseUsdcAddress",
+
+    // Example: 1000 SUGAR = 1 ton.
+    tokensPerTon: "1000n",
+  },
+}
