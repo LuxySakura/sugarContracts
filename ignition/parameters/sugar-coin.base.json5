@@ -1,0 +1,10 @@
+{
+  SugarCoinModule: {
+    // Base mainnet SugarCoin deployment parameters.
+    tokenName: "SugarCoin",
+    tokenSymbol: "SUGAR",
+
+    // Whole-token supply. The contract applies ERC20 decimals during minting.
+    initialSupplyTokens: "2000000000n",
+  },
+}

@@ -15,14 +15,19 @@ contract SugarCoin is ERC20, ERC20Burnable, ERC20Pausable, AccessControl {
 
     event TradingEnabled();
 
-    constructor(address defaultAdmin)
-    ERC20("SugarCoin", "SUGAR")
+    constructor(
+        address defaultAdmin,
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint256 initialSupplyTokens
+    )
+    ERC20(tokenName, tokenSymbol)
     {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(PAUSER_ROLE, defaultAdmin);
         _grantRole(TRANSFER_ROLE, defaultAdmin);
 
-        _mint(defaultAdmin, 200000000 * 10 ** decimals());
+        _mint(defaultAdmin, initialSupplyTokens * 10 ** decimals());
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {

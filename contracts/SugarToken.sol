@@ -28,59 +28,52 @@ contract SugarCommodityToken is ERC20, ERC20Burnable, AccessControl {
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant CAPACITY_MANAGER_ROLE = keccak256("CAPACITY_MANAGER_ROLE");
-    bytes32 public constant FINANCIAL_ROLE = keccak256("FINANCIAL_ROLE"); // 新增财务角色：用于提取销售收入
+    bytes32 public constant FINANCIAL_ROLE = keccak256("FINANCIAL_ROLE");
 
-    // 物理产能安全锁：当前链上允许流通的最大代币数量
     uint256 public maxMintableCapacity;
 
-    // --- 新增：定价与预言机相关变量 ---
     ISugarPriceOracle public sugarOracle;
     IERC20Metadata public usdc;
-    // 兑换比例：一吨糖对应多少个代币（不包含小数位，例如 1000 表示 1000 个代币 = 1吨糖）
+    IERC20Metadata public usdt;
     uint256 public tokensPerTon;
 
-    // --- 事件 ---
     event SugarRedeemed(address indexed redeemer, uint256 amount, string deliveryOrderId);
     event CapacityUpdated(uint256 oldCapacity, uint256 newCapacity);
     event TokensPurchased(address indexed buyer, uint256 amount, uint256 totalCost, address paymentAsset); // 购买事件
-    event OracleUpdated(address oldOracle, address newOracle); // 预言机更新事件
+    event OracleUpdated(address oldOracle, address newOracle);
     event UsdcUpdated(address oldUsdc, address newUsdc);
-    event ExchangeRateUpdated(uint256 oldRate, uint256 newRate); // 兑换比例更新事件
+    event UsdtUpdated(address oldUsdt, address newUsdt);
+    event ExchangeRateUpdated(uint256 oldRate, uint256 newRate);
 
     constructor(
         address defaultAdmin,
         address _oracleAddress,
         address _usdcAddress,
+        address _usdtAddress,
         uint256 _tokensPerTon
-    ) ERC20("Real Sugar Token", "SUGAR") {
+    ) ERC20("Sugar Token", "SGRT") {
         require(_oracleAddress != address(0), "SugarToken: Invalid oracle address");
         require(_usdcAddress != address(0), "SugarToken: Invalid USDC address");
+        require(_usdtAddress != address(0), "SugarToken: Invalid USDT address");
         require(_tokensPerTon > 0, "SugarToken: Tokens per ton must be > 0");
 
-        // 授予各项权限
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(MINTER_ROLE, defaultAdmin);
         _grantRole(CAPACITY_MANAGER_ROLE, defaultAdmin);
         _grantRole(FINANCIAL_ROLE, defaultAdmin);
 
-        // 初始化预言机和兑换比例
         sugarOracle = ISugarPriceOracle(_oracleAddress);
         usdc = IERC20Metadata(_usdcAddress);
+        usdt = IERC20Metadata(_usdtAddress);
         tokensPerTon = _tokensPerTon;
     }
 
-    /**
-     * @dev 更新物理产能安全锁
-     */
     function updateCapacity(uint256 newCapacity) external onlyRole(CAPACITY_MANAGER_ROLE) {
         uint256 oldCapacity = maxMintableCapacity;
         maxMintableCapacity = newCapacity;
         emit CapacityUpdated(oldCapacity, newCapacity);
     }
 
-    /**
-     * @dev 管理员更新预言机地址
-     */
     function setOracle(address _oracleAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_oracleAddress != address(0), "SugarToken: Invalid oracle address");
         address oldOracle = address(sugarOracle);
@@ -95,9 +88,13 @@ contract SugarCommodityToken is ERC20, ERC20Burnable, AccessControl {
         emit UsdcUpdated(oldUsdc, _usdcAddress);
     }
 
-    /**
-     * @dev 管理员更新兑换比例 (例如市场包装规格发生变化)
-     */
+    function setUsdt(address _usdtAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_usdtAddress != address(0), "SugarToken: Invalid USDT address");
+        address oldUsdt = address(usdt);
+        usdt = IERC20Metadata(_usdtAddress);
+        emit UsdtUpdated(oldUsdt, _usdtAddress);
+    }
+
     function setTokensPerTon(uint256 _tokensPerTon) external onlyRole(DEFAULT_ADMIN_ROLE) {
         require(_tokensPerTon > 0, "SugarToken: Tokens per ton must be > 0");
         uint256 oldRate = tokensPerTon;
@@ -105,10 +102,6 @@ contract SugarCommodityToken is ERC20, ERC20Burnable, AccessControl {
         emit ExchangeRateUpdated(oldRate, _tokensPerTon);
     }
 
-    /**
-     * @dev 前端用户购买代币 (核心新增功能)
-     * @param amount 用户想要购买的代币数量（包含18位精度）
-     */
     function buyTokens(uint256 amount) external payable {
         buyTokensWithETH(amount);
     }
@@ -135,6 +128,14 @@ contract SugarCommodityToken is ERC20, ERC20Burnable, AccessControl {
     }
 
     function buyTokensWithUSDC(uint256 amount) external {
+        _buyTokensWithStablecoin(amount, usdc);
+    }
+
+    function buyTokensWithUSDT(uint256 amount) external {
+        _buyTokensWithStablecoin(amount, usdt);
+    }
+
+    function _buyTokensWithStablecoin(uint256 amount, IERC20Metadata paymentToken) internal {
         require(amount > 0, "SugarToken: Buy amount must be > 0");
         _validateCapacity(amount);
 
@@ -142,17 +143,14 @@ contract SugarCommodityToken is ERC20, ERC20Burnable, AccessControl {
         require(sugarUsdPricePerTon > 0, "SugarToken: Invalid oracle price");
 
         uint256 totalUsdCost18 = _calculateCost(amount, sugarUsdPricePerTon);
-        uint256 totalUsdcCost = _scaleFrom18(totalUsdCost18, usdc.decimals());
+        uint256 totalStablecoinCost = _scaleFrom18(totalUsdCost18, paymentToken.decimals());
 
-        IERC20(address(usdc)).safeTransferFrom(msg.sender, address(this), totalUsdcCost);
+        IERC20(address(paymentToken)).safeTransferFrom(msg.sender, address(this), totalStablecoinCost);
 
         _mint(msg.sender, amount);
-        emit TokensPurchased(msg.sender, amount, totalUsdcCost, address(usdc));
+        emit TokensPurchased(msg.sender, amount, totalStablecoinCost, address(paymentToken));
     }
 
-    /**
-     * @dev 财务提取合约内的销售收入
-     */
     function withdrawFunds(address payable to) external onlyRole(FINANCIAL_ROLE) {
         uint256 balance = address(this).balance;
         require(balance > 0, "SugarToken: No funds to withdraw");
@@ -166,17 +164,11 @@ contract SugarCommodityToken is ERC20, ERC20Burnable, AccessControl {
         IERC20(token).safeTransfer(to, balance);
     }
 
-    /**
-     * @dev 后台管理员直接铸造（保留用于法币入金、线下打款等非加密货币支付场景）
-     */
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         require(totalSupply() + amount <= maxMintableCapacity, "SugarToken: Exceeds physical collateral capacity limit");
         _mint(to, amount);
     }
 
-    /**
-     * @dev 用户销毁代币，申请线下提货
-     */
     function redeemPhysicalSugar(uint256 amount, string calldata deliveryOrderId) external {
         require(amount > 0, "SugarToken: Redeem amount must be greater than zero");
         _burn(msg.sender, amount);

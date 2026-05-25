@@ -6,6 +6,9 @@
     // Fill this with the official USDC token address on Base Sepolia.
     usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
 
+    // Fill this with the USDT token address on Base Sepolia.
+    usdtAddress: "0xYourBaseSepoliaUsdtAddress",
+
     // Example: 1000 SUGAR = 1 ton.
     tokensPerTon: "1000n",
   },

@@ -23,10 +23,10 @@ describe("SugarCoin", async function () {
 
         // 部署合约
         const sugarCoin = await viem.deployContract(
-            "SugarCoin", [ownerAddress]
+            "SugarCoin", [ownerAddress, "SugarCoin", "SUGAR", 2000000000n]
         );
 
-        const initialSupply = parseEther("200000000");
+        const initialSupply = parseEther("2000000000");
 
         // 获取合约中定义的 Role 哈希值 (public constant)
         const DEFAULT_ADMIN_ROLE = await sugarCoin.read.DEFAULT_ADMIN_ROLE();

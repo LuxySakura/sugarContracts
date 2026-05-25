@@ -6,6 +6,9 @@
     // Fill this with the official USDC token address on Base mainnet.
     usdcAddress: "0xYourBaseUsdcAddress",
 
+    // Fill this with the official USDT token address on Base mainnet.
+    usdtAddress: "0xYourBaseUsdtAddress",
+
     // Example: 1000 SUGAR = 1 ton.
     tokensPerTon: "1000n",
   },

@@ -10,6 +10,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const adminKey = process.env.PRIVATE_KEY_ADMIN || "";
+const sepoliaKey = process.env.SEPOLIA_PRIVATE_KEY || "";
 
 export default defineConfig({
   plugins: [
@@ -55,7 +56,7 @@ export default defineConfig({
       type: "http",
       chainType: "op",
       url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
-      accounts: adminKey !== "" ? [adminKey] : [],
+      accounts: sepoliaKey !== "" ? [sepoliaKey] : [],
       chainId: 84532,
     },
     base: {
@@ -73,7 +74,7 @@ export default defineConfig({
         etherscan: {
           name: "BaseScan",
           url: "https://sepolia.basescan.org",
-          apiUrl: "https://api-sepolia.basescan.org/api",
+          apiUrl: "https://api.etherscan.io/v2/api",
         },
       },
     },
@@ -83,7 +84,7 @@ export default defineConfig({
         etherscan: {
           name: "Base Scan",
           url: "https://basescan.org",
-          apiUrl: "https://api.basescan.org/api",
+          apiUrl: "https://api.etherscan.io/v2/api",
         },
       },
     },

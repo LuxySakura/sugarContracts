@@ -10,12 +10,17 @@ const SugarTokenModule = buildModule("SugarTokenModule", (m) => {
     "usdcAddress",
     "0x0000000000000000000000000000000000000002",
   );
+  const usdtAddress = m.getParameter(
+    "usdtAddress",
+    "0x0000000000000000000000000000000000000003",
+  );
   const tokensPerTon = m.getParameter("tokensPerTon", 1000n);
 
   const sugarToken = m.contract("SugarCommodityToken", [
     defaultAdmin,
     oracleAddress,
     usdcAddress,
+    usdtAddress,
     tokensPerTon,
   ]);
 

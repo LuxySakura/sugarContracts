@@ -34,6 +34,11 @@ describe("SugarCommodityToken", function () {
       "USDC",
       6,
     ]);
+    const usdt = await viem.deployContract("MockERC20", [
+      "Tether USD",
+      "USDT",
+      6,
+    ]);
 
     const tokensPerTon = 1000n;
 
@@ -41,6 +46,7 @@ describe("SugarCommodityToken", function () {
       owner.account.address,
       sugarOracle.address,
       usdc.address,
+      usdt.address,
       tokensPerTon,
     ]);
 
@@ -54,6 +60,7 @@ describe("SugarCommodityToken", function () {
       sugarOracle,
       nativeUsdFeed,
       usdc,
+      usdt,
       owner,
       updater,
       buyer,
@@ -74,6 +81,7 @@ describe("SugarCommodityToken", function () {
         sugarToken,
         sugarOracle,
         usdc,
+        usdt,
         owner,
         tokensPerTon,
         MINTER_ROLE,
@@ -88,6 +96,7 @@ describe("SugarCommodityToken", function () {
         getAddress(sugarOracle.address),
       );
       expect(await sugarToken.read.usdc()).to.equal(getAddress(usdc.address));
+      expect(await sugarToken.read.usdt()).to.equal(getAddress(usdt.address));
       expect(await sugarToken.read.tokensPerTon()).to.equal(tokensPerTon);
       expect(
         await sugarToken.read.hasRole([DEFAULT_ADMIN_ROLE, owner.account.address]),
@@ -113,12 +122,18 @@ describe("SugarCommodityToken", function () {
         "USDC",
         6,
       ]);
+      const usdt = await viem.deployContract("MockERC20", [
+        "Tether USD",
+        "USDT",
+        6,
+      ]);
 
       await expect(
         viem.deployContract("SugarCommodityToken", [
           owner.account.address,
           "0x0000000000000000000000000000000000000000",
           usdc.address,
+          usdt.address,
           1000n,
         ]),
       ).to.be.rejectedWith("SugarToken: Invalid oracle address");
@@ -144,9 +159,41 @@ describe("SugarCommodityToken", function () {
           owner.account.address,
           sugarOracle.address,
           "0x0000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000001",
           1000n,
         ]),
       ).to.be.rejectedWith("SugarToken: Invalid USDC address");
+    });
+
+    it("Should revert when deployed with an invalid USDT address", async function () {
+      const [owner, updater] = await viem.getWalletClients();
+      const nativeUsdFeed = await viem.deployContract("MockV3Aggregator", [
+        8,
+        3000_00000000n,
+      ]);
+      const sugarOracle = await viem.deployContract("SugarPriceOracle", [
+        owner.account.address,
+        updater.account.address,
+        nativeUsdFeed.address,
+        parseEther("600"),
+        86400n,
+        7200n,
+      ]);
+      const usdc = await viem.deployContract("MockERC20", [
+        "USD Coin",
+        "USDC",
+        6,
+      ]);
+
+      await expect(
+        viem.deployContract("SugarCommodityToken", [
+          owner.account.address,
+          sugarOracle.address,
+          usdc.address,
+          "0x0000000000000000000000000000000000000000",
+          1000n,
+        ]),
+      ).to.be.rejectedWith("SugarToken: Invalid USDT address");
     });
   });
 
@@ -173,15 +220,22 @@ describe("SugarCommodityToken", function () {
         "USDC2",
         6,
       ]);
+      const newUsdt = await viem.deployContract("MockERC20", [
+        "Tether USD 2",
+        "USDT2",
+        6,
+      ]);
 
       await sugarToken.write.setOracle([newOracle.address]);
       await sugarToken.write.setUsdc([newUsdc.address]);
+      await sugarToken.write.setUsdt([newUsdt.address]);
       await sugarToken.write.setTokensPerTon([2000n]);
 
       expect(await sugarToken.read.sugarOracle()).to.equal(
         getAddress(newOracle.address),
       );
       expect(await sugarToken.read.usdc()).to.equal(getAddress(newUsdc.address));
+      expect(await sugarToken.read.usdt()).to.equal(getAddress(newUsdt.address));
       expect(await sugarToken.read.tokensPerTon()).to.equal(2000n);
     });
 
@@ -201,9 +255,17 @@ describe("SugarCommodityToken", function () {
         "USDC2",
         6,
       ]);
+      const newUsdt = await viem.deployContract("MockERC20", [
+        "Tether USD 2",
+        "USDT2",
+        6,
+      ]);
 
       await expect(
         sugarTokenAsOther.write.setUsdc([newUsdc.address]),
+      ).to.be.rejected;
+      await expect(
+        sugarTokenAsOther.write.setUsdt([newUsdt.address]),
       ).to.be.rejected;
       await expect(
         sugarTokenAsOther.write.setTokensPerTon([2000n]),
@@ -263,6 +325,39 @@ describe("SugarCommodityToken", function () {
       );
       expect(await usdc.read.balanceOf([sugarToken.address])).to.equal(
         usdcAmount,
+      );
+    });
+
+    it("Should buy tokens with USDT using the oracle USD price", async function () {
+      const { sugarToken, usdt, buyer } = await networkHelpers.loadFixture(
+        deploySugarTokenFixture,
+      );
+
+      await sugarToken.write.updateCapacity([parseEther("1000")]);
+
+      const amountToBuy = parseEther("100");
+      const usdtAmount = parseUnits("60", 6);
+
+      await usdt.write.mint([buyer.account.address, usdtAmount]);
+
+      const usdtAsBuyer = await viem.getContractAt("MockERC20", usdt.address, {
+        client: { wallet: buyer },
+      });
+      await usdtAsBuyer.write.approve([sugarToken.address, usdtAmount]);
+
+      const sugarTokenAsBuyer = await viem.getContractAt(
+        "SugarCommodityToken",
+        sugarToken.address,
+        { client: { wallet: buyer } },
+      );
+
+      await sugarTokenAsBuyer.write.buyTokensWithUSDT([amountToBuy]);
+
+      expect(await sugarToken.read.balanceOf([buyer.account.address])).to.equal(
+        amountToBuy,
+      );
+      expect(await usdt.read.balanceOf([sugarToken.address])).to.equal(
+        usdtAmount,
       );
     });
 
@@ -353,6 +448,31 @@ describe("SugarCommodityToken", function () {
 
       await expect(
         sugarTokenAsBuyer.write.buyTokensWithUSDC([parseEther("100")]),
+      ).to.be.rejectedWith("SugarOracle: Sugar price stale");
+    });
+
+    it("Should revert USDT purchases when the sugar price is stale", async function () {
+      const { sugarToken, usdt, buyer } = await networkHelpers.loadFixture(
+        deploySugarTokenFixture,
+      );
+
+      await sugarToken.write.updateCapacity([parseEther("1000")]);
+      await networkHelpers.time.increase(86401);
+
+      const usdtAsBuyer = await viem.getContractAt("MockERC20", usdt.address, {
+        client: { wallet: buyer },
+      });
+      await usdt.write.mint([buyer.account.address, parseUnits("100", 6)]);
+      await usdtAsBuyer.write.approve([sugarToken.address, parseUnits("100", 6)]);
+
+      const sugarTokenAsBuyer = await viem.getContractAt(
+        "SugarCommodityToken",
+        sugarToken.address,
+        { client: { wallet: buyer } },
+      );
+
+      await expect(
+        sugarTokenAsBuyer.write.buyTokensWithUSDT([parseEther("100")]),
       ).to.be.rejectedWith("SugarOracle: Sugar price stale");
     });
 
